@@ -3,7 +3,10 @@ from collections import OrderedDict
 import torch.cuda
 from omegaconf import DictConfig
 
-from model import Net, test
+import torch
+
+from models.model_resnet import Net, test
+from utils import Utils
 
 
 def get_on_fit_config(config: DictConfig):
@@ -26,12 +29,11 @@ def get_evaluate_fn(num_classes: int, testloader):
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        params_dict = zip(model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
-        model.load_state_dict(state_dict, strict=True)
+        model = Utils.set_parameters(model, parameters)
 
         loss, accuracy = test(model, testloader, device)
 
-        return loss, {'accuracy': accuracy}
+        return loss, {'accuracy': accuracy,
+                      'server round': server_round}
 
     return evaluate_fn

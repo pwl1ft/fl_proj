@@ -1,15 +1,14 @@
+from collections import OrderedDict
 from typing import Dict
 
 import flwr as fl
 import torch
-
-from collections import OrderedDict
-
 from flwr.common import NDArrays
 from flwr.proto.transport_pb2 import Scalar
 
-import model
-from model import Net, train
+from models import model_resnet
+from models.model_resnet import Net, train
+from utils import set_num_batches_in_state_dict
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -27,6 +26,8 @@ class FlowerClient(fl.client.NumPyClient):
     def set_parameters(self, parameters):
         params_dict = zip(self.model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+
+        state_dict = set_num_batches_in_state_dict(state_dict)
 
         self.model.load_state_dict(state_dict, strict=True)
 
@@ -51,7 +52,7 @@ class FlowerClient(fl.client.NumPyClient):
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         self.set_parameters(parameters)
 
-        loss, accuracy = model.test(self.model, self.valloader, self.device)
+        loss, accuracy = model_resnet.test(self.model, self.valloader, self.device)
 
         print(f'In evaluate: loss is: {loss}. Accuracy is {accuracy}')
         return float(loss), len(self.valloader), {'accuracy': accuracy}
