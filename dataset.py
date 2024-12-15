@@ -15,10 +15,10 @@ datasets.MNIST.resources = [
 def get_mnist(data_path: str = './data'):
     tr = Compose([ToTensor(), Normalize((0.1307,), (0.3081,))])
 
-    trainset = datasets.MNIST(data_path, train=True, download=True, transform=tr)
-    testset = datasets.MNIST(data_path, train=False, download=True, transform=tr)
+    train_set = datasets.MNIST(data_path, train=True, download=True, transform=tr)
+    test_set = datasets.MNIST(data_path, train=False, download=True, transform=tr)
 
-    return trainset, testset
+    return train_set, test_set
 
 
 def prepare_dataset(num_partitions: int,
@@ -26,29 +26,29 @@ def prepare_dataset(num_partitions: int,
                     val_ratio: float = 0.1
                     ):
 
-    trainset, testset = get_mnist()
+    train_set, test_set = get_mnist()
 
-    # split trainset into 'num_partitions' trainsets
-    num_images = len(trainset) // num_partitions
+    # split train_set into 'num_partitions' train_sets
+    num_images = len(train_set) // num_partitions
 
     partition_len = [num_images] * num_partitions
-    trainsets = random_split(trainset, partition_len, torch.Generator().manual_seed(2023))
+    train_sets = random_split(train_set, partition_len, torch.Generator().manual_seed(2023))
 
     # create dataloaders with train+val support
-    trainloaders = []
-    valloaders = []
+    train_loaders = []
+    val_loaders = []
 
-    for trainset_ in trainsets:
-        num_total = len(trainset_)
+    for train_set in train_sets:
+        num_total = len(train_set)
         num_val = int(val_ratio * num_total)
         num_train = num_total - num_val
 
-        for_train, for_val = random_split(trainset_, [num_train, num_val], torch.Generator().manual_seed(2023))
+        for_train, for_val = random_split(train_set, [num_train, num_val], torch.Generator().manual_seed(2023))
 
-        trainloaders.append(DataLoader(for_train, batch_size=batch_size, shuffle=True, num_workers=2))
-        valloaders.append(DataLoader(for_val, batch_size=batch_size, shuffle=False, num_workers=2))
+        train_loaders.append(DataLoader(for_train, batch_size=batch_size, shuffle=True, num_workers=2))
+        val_loaders.append(DataLoader(for_val, batch_size=batch_size, shuffle=False, num_workers=2))
 
-    testloader = DataLoader(testset, batch_size=128)
+    test_loader = DataLoader(test_set, batch_size=batch_size)
 
-    return trainloaders, valloaders, testloader
+    return train_loaders, val_loaders, test_loader
 

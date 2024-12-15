@@ -63,10 +63,14 @@ def main(cfg: DictConfig):
     save_path = HydraConfig.get().runtime.output_dir
     results_path = Path(save_path) / 'results.pkl'
 
-    results = {'history': history}
+    results = {
+        'config': OmegaConf.to_yaml(cfg),
+        'strategy': krum_strategy.__str__(),
+        'history': history,
+    }
 
-    with open(str(results_path), 'wb') as h:
-        pickle.dump(results, h, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(str(results_path), 'wb') as file:
+        pickle.dump(results, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
